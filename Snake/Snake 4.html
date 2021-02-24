@@ -1,0 +1,488 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta content="user-scalable=no,initial-scale=1,maximum-scale=1,minimum-scale=1,width=device-width" name="viewport">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css"  rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.min.js"></script>
+    <title>Snake</title>
+  </head
+  <body>
+    <div id="buttons" class='m-auto fixed-top'>
+        <input type="number" id="size" min="500" max="2000" step="10" value="500" style="width: 100px;">
+        <button onclick="changeSize()">Change Board Size</button>
+        <input type="number" id="sizeMult" min="1" max="100" step="1" value="5" style="width: 100px;">
+        <button onclick="changeSizeMult()">Change Size Multiplier</button>
+    </div>
+    <div id="container">
+        <canvas id="stage"></canvas>
+    </div>
+    <div style="display: none;">
+        <!--head-->
+        <img id="h_Up" src="Images/Head_Up.png">
+        <img id="h_Down" src="Images/Head_Down.png">
+        <img id="h_Left" src="Images/Head_Left.png">
+        <img id="h_Right" src="Images/Head_Right.png">
+        <!--body-->
+        <img id="b_X" src="Images/Body_X.png">
+        <img id="b_Y" src="Images/Body_Y.png">
+
+        <!--turns-->
+        <img id="b_Turn_UL" src="Images/Body_Turn_UL.png">
+        <img id="b_Turn_UR" src="Images/Body_Turn_UR.png">
+        <img id="b_Turn_DL" src="Images/Body_Turn_DL.png">
+        <img id="b_Turn_DR" src="Images/Body_Turn_DR.png">
+
+        <!--tail-->
+        <img id="t_Up" src="Images/Tail_Up.png">
+        <img id="t_Down" src="Images/Tail_Down.png">
+        <img id="t_Left" src="Images/Tail_Left.png">
+        <img id="t_Right" src="Images/Tail_Right.png">
+
+    </div>
+    <style>
+        #stage
+        {
+            background-color:black;
+            height: 500px;
+            width: 500px;
+            padding-left: 0;
+            padding-right: 0;
+            display: block;
+        }
+        body
+        {
+            background-color: dimgray;
+        }
+        div *
+        {
+           margin: auto;
+        }
+        .m-auto
+        {
+            margin-right: auto;
+            margin-left: auto;
+        }
+    </style>
+
+    <script>
+        //get world
+        var STAGE = document.getElementById('stage');
+        var ctx = STAGE.getContext('2d');
+        ctx.fillStyle = "#ffffff";
+
+        //constant variables
+        const SIZE = 10;
+
+        //keycodes
+        const LEFT = 37;
+        const UP = 38;
+        const RIGHT = 39;
+        const DOWN = 40;
+        const NONE = 0;
+
+        //head position
+        var xPos = STAGE.width/2;
+        var yPos = 0;
+
+        //food position
+        var foodX = xPos;
+        var foodY = 20;
+        //food collected
+        var foodEaten = 0;
+
+        //last direction
+        var lastDir = NONE;
+
+        //last Positions
+        var lastHeadPos = [xPos, yPos];
+        var lastPos = [];
+
+        //score mult, game changes
+        var multiplier = 1;
+        var boardSize = 500;
+
+        //images
+            //head
+            var h_Up = document.getElementById('h_Up');
+            var h_Down = document.getElementById('h_Down');
+            var h_Left = document.getElementById('h_Left');
+            var h_Right = document.getElementById('h_Right');
+
+            //body
+            var b_X = document.getElementById('b_X');
+            var b_Y = document.getElementById('b_Y');
+
+            //turns
+            var b_Turn_UL = document.getElementById('b_Turn_UL'); 
+            var b_Turn_UR = document.getElementById('b_Turn_UR'); 
+            var b_Turn_DL = document.getElementById('b_Turn_DL'); 
+            var b_Turn_DR = document.getElementById('b_Turn_DR'); 
+
+            //tail
+            var t_Up = document.getElementById('t_Up');
+            var t_Down = document.getElementById('t_Down');
+            var t_Left = document.getElementById('t_Left');
+            var t_Right = document.getElementById('t_Right');
+        
+        //get keys, ever 50 miliseconds (wont allow you to hit yourself accidentally)
+        window.addEventListener("keydown", (function(canMove) {
+        return function(event) {
+            if (!canMove) return false;
+            canMove = false;
+            setTimeout(function() { canMove = true; }, 50);
+            switch (event.keyCode) {
+            case RIGHT: 
+                if(lastDir != LEFT)                      
+                lastDir = RIGHT;
+                break;
+            case DOWN: 
+                if(lastDir != UP)   
+                lastDir = DOWN;
+                break; 
+            case LEFT: 
+                if(lastDir != RIGHT)
+                lastDir = LEFT;
+                break; 
+            case UP: 
+                if(lastDir != DOWN)              
+                lastDir = UP;
+                break;
+            }  
+        };
+        })(true), false);
+
+        //change board size
+        function changeSize()
+        {
+            boardSize = document.getElementById('size').value;
+            boardSize = round(boardSize);
+            if(boardSize > 1000)
+            {
+                boardSize = 1000;
+            }
+            else if(boardSize < 500)
+            {
+                boardSize = 500;
+            }
+            STAGE.height = boardSize;
+            STAGE.width = boardSize;
+        }
+
+        //change size multiplier
+        function changeSizeMult()
+        {
+            multiplier = document.getElementById("sizeMult").value;
+            Math.round(multiplier);
+            if(multiplier <= 0)
+            {
+                multiplier = 1;
+            }
+            else if(multiplier > 100)
+            {
+                multiplier = 100;
+            }   
+        }
+
+        //round to nearest 10
+        function round(num) 
+        {
+            //prescion
+            var pre = -1;
+            var pow = Math.pow(SIZE,pre);
+            return Math.round(num*pow)/pow;
+        }
+
+        //move 
+        function move()
+        {
+            lastHeadPos[0] = xPos;
+            lastHeadPos[1] = yPos;
+            switch(lastDir)
+            {
+                case LEFT:
+                    xPos -= SIZE;
+                    break;
+                case UP:    
+                    yPos -= SIZE;
+                    break;
+                case RIGHT:
+                    xPos += SIZE;
+                    break;
+                case DOWN:
+                    yPos += SIZE;
+                    break;        
+            }
+            if(xPos >= STAGE.width)
+            {
+                xPos = 0;
+            }
+            else if(xPos < 0)
+            {
+                xPos = STAGE.width;
+            }
+
+            if(yPos >= STAGE.height)
+            {
+                yPos = 0;
+            }
+            else if(yPos < 0)
+            {
+                yPos = STAGE.height;
+            }
+            for (var i = STAGE.width * STAGE.height; i > 0; i--)
+            {
+                if (lastPos[i] != undefined && lastPos[i - 1] != undefined)
+                {
+                    lastPos[i][0] = lastPos[i - 1][0];
+                    lastPos[i][1] = lastPos[i - 1][1];
+                }
+            }
+            if (lastPos.length > 0)
+            {
+                lastPos[0][0] = lastHeadPos[0];
+                lastPos[0][1] = lastHeadPos[1];
+            }
+            drawHead(xPos, yPos);
+        }
+        
+        //collision test
+        function collisionDetect()
+        {
+            for (var i = 0; i < lastPos.length; i++)
+            {
+                if (xPos == lastPos[i][0] && yPos == lastPos[i][1])
+                {
+                    hit();
+                }
+                if (foodX == lastPos[i][0] && foodY == lastPos[i][1])
+                {
+                    foodX = getRandom(0, STAGE.width - SIZE);
+                    foodY = getRandom(0, STAGE.height - SIZE);
+                }
+            }
+            if(foodX == xPos && foodY == yPos)
+            {
+
+                foodX = getRandom(0, STAGE.width - SIZE);
+                foodY = getRandom(0, STAGE.height - SIZE);
+                foodEaten++;
+                for (var i = 0; i < multiplier; i++)
+                {
+                    lastPos.push(new Array);    
+                }
+            }
+        }
+
+        //random numbers within a specific range
+        function getRandom(min, max) {
+            return getRandomInt(min / SIZE, max / SIZE) * SIZE;
+        }
+        function getRandomInt(min, max) 
+        {
+            return Math.floor(Math.random() * (max - min + 1) + min);
+        }
+
+        //death function
+        function hit()
+        {
+            alert("You Died! Highscore: " + foodEaten);
+            window.location.reload()
+        }
+        
+        //draw head to stage
+        function drawHead(x, y)
+        {
+            ctx.clearRect(0, 0, STAGE.width, STAGE.height);
+            
+            //change head type
+            switch(lastDir)
+            {
+                case LEFT:
+                    ctx.drawImage(h_Left, x, y, SIZE, SIZE);
+                    break;
+                case UP:    
+                    ctx.drawImage(h_Up, x, y, SIZE, SIZE);
+                    break;
+                case RIGHT:
+                    ctx.drawImage(h_Right, x, y, SIZE, SIZE);
+                    break;
+                case DOWN:
+                    ctx.drawImage(h_Down, x, y, SIZE, SIZE);
+                    break; 
+                case NONE:
+                    ctx.drawImage(h_Down, x, y, SIZE, SIZE);
+                    break; 
+            }
+            
+            xPos = x;
+            yPos = y;
+            collisionDetect();
+            drawBody();
+            drawFood(foodX, foodY);
+        }
+
+        //draw body
+        function drawBody()
+        {
+            for(var i = 0; i < lastPos.length; i++)
+            {
+                turn = false;
+                x = lastPos[i][0];
+                y = lastPos[i][1];
+                ctx.fillStyle = "#0000ff";
+                if(lastPos.length - 1 == i)
+                {
+                    if(lastPos[i - 1] != undefined)
+                    {
+                        if(lastPos[i - 1][0] > x && lastPos[i - 1][1] == y)
+                        {
+                            ctx.drawImage(t_Right, x, y, SIZE, SIZE);
+                        }
+                        if(lastPos[i - 1][0] < x && lastPos[i - 1][1] == y)
+                        {
+                            ctx.drawImage(t_Left, x, y, SIZE, SIZE);
+                        }
+                        if(lastPos[i - 1][1] > y && lastPos[i - 1][0] == x)
+                        {
+                            ctx.drawImage(t_Down, x, y, SIZE, SIZE);
+                        }
+                        if(lastPos[i - 1][1] < y && lastPos[i - 1][0] == x)
+                        {
+                            ctx.drawImage(t_Up, x, y, SIZE, SIZE);
+                        }
+                    }
+                    else
+                    {
+                        if(lastDir == RIGHT)
+                        {
+                            ctx.drawImage(t_Right, x, y, SIZE, SIZE);
+                        }
+                        if(lastDir == LEFT)
+                        {
+                            ctx.drawImage(t_Left, x, y, SIZE, SIZE);
+                        }
+                        if(lastDir == DOWN)
+                        {
+                            ctx.drawImage(t_Down, x, y, SIZE, SIZE);
+                        }
+                        if(lastDir == UP)
+                        {
+                            ctx.drawImage(t_Up, x, y, SIZE, SIZE);
+                        }
+                    } 
+                }
+                else if(lastPos[i - 1] != undefined)
+                {
+                    if(lastPos[i - 1][0] > x && lastPos[i + 1][1] < y || lastPos[i + 1][0] > x && lastPos[i - 1][1] < y)
+                    {
+                        ctx.drawImage(b_Turn_UR, x, y, SIZE, SIZE)
+                        turn = true;
+                    }
+                    if(lastPos[i - 1][0] < x && lastPos[i + 1][1] < y || lastPos[i + 1][0] < x && lastPos[i - 1][1] < y)
+                    {
+                        ctx.drawImage(b_Turn_UL, x, y, SIZE, SIZE)
+                        turn = true;
+                    }
+                    if(lastPos[i - 1][0] < x && lastPos[i + 1][1] > y || lastPos[i + 1][0] < x && lastPos[i - 1][1] > y)
+                    {
+                        ctx.drawImage(b_Turn_DL, x, y, SIZE, SIZE)
+                        turn = true;
+                    }
+                    if(lastPos[i - 1][0] > x && lastPos[i + 1][1] > y || lastPos[i + 1][0] > x && lastPos[i - 1][1] > y)
+                    {
+                        ctx.drawImage(b_Turn_DR, x, y, SIZE, SIZE)
+                        turn = true;
+                    }
+                    if(!turn)
+                    {
+                        if(lastPos[i - 1][0] > x && lastPos[i - 1][1] == y || lastPos[i - 1][0] < x && lastPos[i - 1][1] == y)
+                        {
+                            ctx.drawImage(b_X, x, y, SIZE, SIZE);
+                        }
+                        if(lastPos[i - 1][1] > y && lastPos[i - 1][0] == x || lastPos[i - 1][1] < y && lastPos[i - 1][0] == x)
+                        {
+                            ctx.drawImage(b_Y, x, y, SIZE, SIZE);
+                        }
+                    }
+                }
+                else
+                {
+                    switch(lastDir)
+                    {
+                        case LEFT:
+                            if(lastPos[i + 1][1] > y)
+                            {
+                                ctx.drawImage(b_Turn_DL, x, y, SIZE, SIZE);
+                            }
+                            else if(lastPos[i + 1][1] < y)
+                            {
+                                ctx.drawImage(b_Turn_UL, x, y, SIZE, SIZE);
+                            }
+                            else
+                            {
+                                ctx.drawImage(b_X, x, y, SIZE, SIZE);
+                            }
+                            break;
+                        case UP:    
+                            if(lastPos[i + 1][0] > x)
+                            {
+                                ctx.drawImage(b_Turn_UR, x, y, SIZE, SIZE);
+                            }
+                            else if(lastPos[i + 1][0] < x)
+                            {
+                                ctx.drawImage(b_Turn_UL, x, y, SIZE, SIZE);
+                            }
+                            else
+                            {
+                                ctx.drawImage(b_Y, x, y, SIZE, SIZE);
+                            }
+                            break;
+                        case RIGHT:
+                            if(lastPos[i + 1][1] > y)
+                            {
+                                ctx.drawImage(b_Turn_DR, x, y, SIZE, SIZE);
+                            }
+                            else if(lastPos[i + 1][1] < y)
+                            {
+                                ctx.drawImage(b_Turn_UR, x, y, SIZE, SIZE);
+                            }
+                            else
+                            {
+                                ctx.drawImage(b_X, x, y, SIZE, SIZE);
+                            }
+                            break;
+                        case DOWN:
+                            if(lastPos[i + 1][0] > x)
+                            {
+                                ctx.drawImage(b_Turn_DR, x, y, SIZE, SIZE);
+                            }
+                            else if(lastPos[i + 1][0] < x)
+                            {
+                                ctx.drawImage(b_Turn_DL, x, y, SIZE, SIZE);
+                            }
+                            else
+                            {
+                                ctx.drawImage(b_Y, x, y, SIZE, SIZE);
+                            }
+                            break; 
+                    }
+                }
+                ctx.fillStyle = "#ff0000";
+            }
+        }
+
+        //draw food
+        function drawFood(x, y)
+        {
+            ctx.fillStyle = "#ff0000";
+            ctx.fillRect(x + 1, y + 1, SIZE - 1, (SIZE) - 1);
+            ctx.fillStyle = "#0000ff";
+        }
+        window.onload = changeSize();
+        setInterval(move, 75);
+    </script>
+  </body>
+</html>
