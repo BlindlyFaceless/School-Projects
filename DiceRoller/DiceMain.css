@@ -1,0 +1,24 @@
+body{
+    display: grid;
+    grid-row: auto 1fr auto;
+    width: 100vw;
+    height: 100vh;
+}
+#Total{
+    background-color: #3399ff;
+    padding: 10px;
+    border-radius: 15px 15px 0px 0px;
+}
+#Inputs{    
+    background-color: #3399ff;
+    padding: 10px;
+    border-radius: 0px 0px 15px 15px;
+}
+#diceOut{
+    padding: 10px;
+    overflow: auto;
+}
+.m-auto{
+    margin-right: auto;
+    margin-left: auto;
+}

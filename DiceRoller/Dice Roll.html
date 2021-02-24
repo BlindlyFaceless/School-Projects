@@ -1,0 +1,123 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Dice Roll</title>
+    <meta content="user-scalable=no,initial-scale=1,maximum-scale=1,minimum-scale=1,width=device-width" name="viewport">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css"  rel="stylesheet">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/js/all.js" crossorigin="anonymous"></script>
+
+    <link href="DiceMain.css" rel="stylesheet">
+
+</head>
+<body class='contanier-fluid'>
+
+    
+    <div id='Inputs' class='m-auto fixed-top'>
+        <input id="Number" type="number" min="1" placeholder="How many dice"> 
+        <input id="Rolls" type="number" min="1" placeholder="How many rolls">  
+        <button>Roll</button>
+    </div>
+    <div id ="diceOut" style="font-size: 2vw" class='m-auto'></div> 
+    <div id="Total" style="font-size: 2vw" class='fixed-bottom m-auto'></div>
+
+    <script>
+        //variables
+        var rollCount = document.getElementById("Rolls");
+        var diceNumber = document.getElementById("Number");
+        
+        var diFace = "";
+        var image = document.querySelector("img");
+
+
+        //the button
+        var button = document.querySelector("button");
+        button.style.cursor = "pointer";
+        button.addEventListener("click", clickHandler, false);
+
+        function clickHandler() {
+            //roll the die
+            var outNum = document.getElementById("diceOut");
+            var outTot = document.getElementById("Total");
+            var diceTotal = [                        
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0]
+            var dice = [];
+            outNum.innerHTML = "";
+            outTot.innerHTML = "";
+            if (rollCount.length <= 0 && diceNumber.length <= 0 || diceNumber.length <= 0 || rollCount.length <= 0 || diceNumber.value <= 0 || rollCount.value <= 0) {
+                outTot.innerText = "please put in a number greater than 0";
+                console.log('0')
+                return false;
+
+            }
+        
+            for(i = 0; i < diceNumber.value; i++){
+                if(dice[i] == undefined){
+                    dice.push([                     
+                        new Array(),
+                        new Array(),
+                        new Array(),
+                        new Array(),
+                        new Array(),
+                        new Array()
+                    ]);
+                }
+
+                for (x = 0; x < rollCount.value; x++) {
+                    var roll = Math.floor(Math.random() * 6); //random number  0 or 5
+                    
+                    dice[i][roll].push(1);  
+                }
+                
+                dice[i].forEach(function(val, index){
+                    diceTotal[index] = diceTotal[index] + parseInt(val.length)
+                });
+
+                var diceNumberHeader = document.createElement("P");
+                diceNumberHeader.innerText = "Die " + (i+1);
+                outNum.appendChild(diceNumberHeader);
+
+                var para = document.createElement("P");
+                para.innerHTML = 
+                '<i class="fas fa-dice-one"></i>: '  + dice[i][0].length + 
+                ' <i class="fas fa-dice-two"></i>: ' + dice[i][1].length +
+                ' <i class="fas fa-dice-three"></i>: ' + dice[i][2].length +
+                ' <i class="fas fa-dice-four"></i>: ' + dice[i][3].length +
+                ' <i class="fas fa-dice-five"></i>: ' + dice[i][4].length +
+                ' <i class="fas fa-dice-six"></i>: ' + dice[i][5].length;
+                outNum.appendChild(para);
+
+            }
+            var percentHead = document.createElement("P");
+                percentHead.innerText = "Percentage of Numbers Rolled";
+                outTot.appendChild(percentHead);
+
+                var sum = diceTotal.reduce(function(total, num){ return total + num},0);
+
+                var percent = document.createElement("P");
+                percent.innerHTML = 
+                '<i class="fas fa-dice-one"></i>: ' + Math.round(((diceTotal[0] / sum) * 100)) + " % " +
+                ' <i class="fas fa-dice-two"></i>: ' + Math.round(((diceTotal[1] / sum) * 100)) + " % " +
+                ' <i class="fas fa-dice-three"></i>: ' + Math.round(((diceTotal[2] / sum) * 100)) + " % " +
+                ' <i class="fas fa-dice-four"></i>: ' + Math.round(((diceTotal[3] / sum) * 100)) + " % " +
+                ' <i class="fas fa-dice-five"></i>: ' + Math.round(((diceTotal[4] / sum) * 100)) + " % " +
+                ' <i class="fas fa-dice-six"></i>: ' + Math.round(((diceTotal[5] / sum) * 100)) + " % " ;
+                outTot.appendChild(percent);
+        }
+
+
+    </script>
+</body>
+</html>
