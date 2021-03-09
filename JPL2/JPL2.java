@@ -1,5 +1,3 @@
-package jpl2;
-
 import java.util.Scanner;
 
 public class JPL2
@@ -7,10 +5,6 @@ public class JPL2
 
     public static void main(String[] args) 
     {
-       
-        Scanner L = new Scanner(System.in);
-        Scanner W = new Scanner(System.in);
-        Scanner H = new Scanner(System.in);
         Scanner input = new Scanner(System.in);
         
         
@@ -24,7 +18,7 @@ public class JPL2
             if(checkInput.substring(0,1).contains("Y"))
             {   
                 System.out.println("What is the length?");
-                Boxx line = new Boxx(L.nextInt());
+                Boxx line = new Boxx(input.nextInt());
                 System.out.println(line.output);
             }
             
@@ -33,7 +27,7 @@ public class JPL2
             if(checkInput.substring(0,1).contains("Y"))
             {   
                 System.out.println("What is the length and width");
-                Boxx box = new Boxx(L.nextInt(), W.nextInt());
+                Boxx box = new Boxx(input.nextInt(), input.nextInt());
                 System.out.println(box.output);
             }
             
@@ -42,7 +36,7 @@ public class JPL2
             if(checkInput.substring(0,1).contains("Y"))
             {   
                 System.out.println("What is the length and width and height");
-                Boxx cube = new Boxx(L.nextInt(), W.nextInt(), H.nextInt());
+                Boxx cube = new Boxx(input.nextInt(), input.nextInt(), input.nextInt());
                 System.out.println(cube.output);
             }
         }  
@@ -71,10 +65,15 @@ public class JPL2
                 }
             }
         }
-        L.close();
-        W.close();
-        H.close();
-        input.close();
 
+        
+        System.out.println("Would you like to look at your employees?");
+        checkInput = input.nextLine().toUpperCase();
+        if(checkInput.substring(0,1).contains("Y"))
+        {
+            EmployeeList list = new EmployeeList();
+        }
+        
+        input.close();
     }
 }

@@ -1,5 +1,3 @@
-package jpl2;
-
 public class Boxx {
     
     int length = 0;
